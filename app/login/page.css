@@ -1,0 +1,15 @@
+
+.inputlogin{
+        border:1px solid rgba(154, 109, 180, 0.565);
+        border-radius:40px;
+        width:55vw;
+        display:flex;
+        flex-direction:row;
+        gap: 30px;
+        justify-content: center;
+        align-items: center;
+}
+.social-login-btns > button:hover{
+        background-color: rgba(99, 97, 100, 0.232);
+        color: white;
+}
