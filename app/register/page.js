@@ -2,18 +2,20 @@
 import React, { useEffect, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import "./page.css";
 import Link from "next/link";
 
-const Login = () => {
+const Register = () => {
   const { data: session } = useSession();
   const router = useRouter();
-  const [loginData, setLoginData] = useState({
+  const [registerData, setRegisterData] = useState({
+    name: "",
     email: "",
-    password: ""
+    password: "",
+    confirmPassword: ""
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -22,69 +24,116 @@ const Login = () => {
   }, [session, router]);
 
   const handleChange = (e) => {
-    setLoginData({
-      ...loginData,
+    setRegisterData({
+      ...registerData,
       [e.target.name]: e.target.value
     });
   };
 
-  const handleEmailPasswordLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-
-    if (!loginData.email || !loginData.password) {
-      setError("Please enter both email and password");
+    
+    // Validate inputs
+    if (!registerData.name || !registerData.email || !registerData.password || !registerData.confirmPassword) {
+      setError("Please fill in all fields");
       return;
     }
-
+    
+    if (registerData.password !== registerData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    
+    if (registerData.password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+    
     try {
       setLoading(true);
       setError("");
-
-      // Attempt to sign in with credentials
-      const result = await signIn("credentials", {
-        redirect: false,
-        email: loginData.email,
-        password: loginData.password
+      
+      console.log("Submitting registration with data:", {
+        name: registerData.name,
+        email: registerData.email,
+        hasPassword: !!registerData.password,
+        passwordLength: registerData.password.length
       });
-
-      if (result.error) {
-        setError(result.error === "CredentialsSignin"
-          ? "Invalid email or password"
-          : result.error);
-      } else {
-        // Successful login - the router will automatically redirect to dashboard
-        // due to the useEffect
+      
+      // Call API to register user
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: registerData.name,
+          email: registerData.email,
+          password: registerData.password,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed");
       }
+      
+      console.log("Registration successful:", data);
+      
+      // Show success message
+      setSuccess(true);
+      
+      // Redirect to login page after successful registration
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+      
     } catch (error) {
-      setError("An error occurred. Please try again.");
-      console.error("Login error:", error);
+      setError(error.message || "An error occurred during registration");
+      console.error("Registration error:", error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className=" bg-white flex flex-col">
-      <h1 className="font-bold text-3xl text-center mb-8 text-black">
+    <div className="min-h-screen bg-white flex flex-col">
+      <h1 className="font-bold text-3xl text-center my-10 text-black">
         Get your fans Support
       </h1>
       <div className="inputlogin p-4 flex flex-col mx-auto justify-center shadow-slate-700 shadow-lg shadow-gray-400 bg-white content-center items-center">
-        <form onSubmit={handleEmailPasswordLogin} className="flex flex-col gap-[20px] mt-4 justify-center items-center">
+        <form onSubmit={handleRegister} className="flex flex-col gap-[20px] mt-4 justify-center items-center">
           <div className="font-bold text-3xl text-center text-black">
-            Welcome back
+            Create an account
           </div>
-
+          
           {error && (
             <div className="w-[25vw] text-center bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
               {error}
             </div>
           )}
-
+          
+          {success && (
+            <div className="w-[25vw] text-center bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded">
+              Registration successful! Redirecting to login...
+            </div>
+          )}
+          
+          <input
+            className="p-[10px] bg-transparent text-lg text-black font-semibold border-2 shadow-sm shadow-gray-700 border-gray-700 focus:outline-0 rounded-2xl cursor-text w-[25vw]"
+            type="text"
+            name="name"
+            value={registerData.name}
+            onChange={handleChange}
+            placeholder="Full Name"
+            required
+          />
           <input
             className="p-[10px] bg-transparent text-lg text-black font-semibold border-2 shadow-sm shadow-gray-700 border-gray-700 focus:outline-0 rounded-2xl cursor-text w-[25vw]"
             type="email"
             name="email"
-            value={loginData.email}
+            value={registerData.email}
             onChange={handleChange}
             placeholder="Email address"
             required
@@ -93,35 +142,46 @@ const Login = () => {
             className="p-[10px] bg-transparent text-lg text-black font-semibold text-lg border-2 border-gray-700 focus:outline-0 shadow-sm shadow-gray-700 rounded-2xl cursor-text w-[25vw]"
             type="password"
             name="password"
-            value={loginData.password}
+            value={registerData.password}
             onChange={handleChange}
             placeholder="Password"
             required
           />
-          <button
+          <input
+            className="p-[10px] bg-transparent text-lg text-black font-semibold text-lg border-2 border-gray-700 focus:outline-0 shadow-sm shadow-gray-700 rounded-2xl cursor-text w-[25vw]"
+            type="password"
+            name="confirmPassword"
+            value={registerData.confirmPassword}
+            onChange={handleChange}
+            placeholder="Confirm Password"
+            required
+          />
+          <button 
             type="submit"
-            disabled={loading}
+            disabled={loading || success}
             className="w-[25vw] font-semibold h-[50px] text-xl shadow-lg shadow-purple-400 bg-purple-600 hover:scale-95 ease-in-out duration-300 hover:bg-purple-800 text-white rounded-[18px] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Logging in..." : "Log In"}
+            {loading ? "Creating Account..." : "Sign Up"}
           </button>
-
-          <div className="flex gap-1 justify-center w-[25vw] text-sm">
-            Don't hane an account?
-            <Link href="/register" className="text-blue-600 hover:underline">
-              Sign Up
-            </Link>
+          
+          <div className="flex justify-center w-[25vw] text-sm">
+            <p className="text-black">
+              Already have an account?{" "}
+              <Link href="/login" className="text-blue-600 hover:underline">
+                Log in
+              </Link>
+            </p>
           </div>
         </form>
 
-        <div className="flex flex-row justify-center items-center">
+        <div className="flex flex-row justify-center items-center mt-5">
           <div className="w-[140px] h-[1px] text-gray-300 flex justify-center items-center bg-gray-600 opacity-[0.5]"></div>
           <div className="text-black w-8 bg-white or flex justify-center items-center relative">
             OR
           </div>
           <div className="w-[140px] h-[1px] text-gray-300 flex justify-center items-center bg-gray-600 opacity-[0.5]"></div>
         </div>
-
+        
         <div className="flex flex-col gap-4 mb-4 justify-center items-center social-login-btns">
           <button
             onClick={() => signIn("google")}
@@ -165,9 +225,7 @@ const Login = () => {
           </button>
 
           <button
-            onClick={() => {
-              signIn("github");
-            }}
+            onClick={() => signIn("github")}
             className="flex justify-center items-center gap-2 text-base w-[380px] text-black border-2 border-gray-500 rounded-lg shadow-lg max-w-xs px-6 py-2 text-sm font-medium focus:outline-none"
           >
             <svg
@@ -198,7 +256,6 @@ const Login = () => {
                 </g>
               </g>
             </svg>
-
             <span>Continue with Github</span>
           </button>
         </div>
@@ -207,4 +264,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register; 

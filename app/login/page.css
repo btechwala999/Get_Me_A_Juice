@@ -1,15 +1,27 @@
 
 .inputlogin{
-        border:1px solid rgba(154, 109, 180, 0.565);
+
         border-radius:40px;
-        width:55vw;
+        width:30vw;
+        height: fit-content;
         display:flex;
-        flex-direction:row;
-        gap: 30px;
+        flex-direction:column;
+        gap: 20px;
         justify-content: center;
         align-items: center;
 }
 .social-login-btns > button:hover{
-        background-color: rgba(99, 97, 100, 0.232);
-        color: white;
+        background-color: rgba(218, 216, 220, 0.232);
+        color: rgb(0, 0, 0);
+        scale: 1.02;
+        font-weight: 700;
+        transition: ease-in-out 200ms;
+        
+}
+.social-login-btns >button{
+        transition: ease-in-out 200ms;
+        font-weight: 600;
+}
+.or{
+        background-color: rgb(255, 255, 255);
 }

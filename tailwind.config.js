@@ -7,7 +7,9 @@ module.exports = {
   ],
   theme: {
     extend: {
-      
+      fontFamily: {
+        electrolize: ['Electrolize', 'sans-serif'],
+      },
     },
   },
   plugins: [],
